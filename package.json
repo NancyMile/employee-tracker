@@ -1,19 +1,21 @@
 {
-  "name": "main",
+  "name": "Employee Tracker",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node index"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "ascii-themes": "^1.0.1",
+    "asciiart-logo": "^0.2.7",
     "console.table": "^0.10.0",
     "express": "^4.17.1",
-    "inquirer": "^9.1.1",
+    "inquirer": "^6.5.2",
     "jshint": "^2.12.0",
     "mysql2": "^2.2.5"
   }
