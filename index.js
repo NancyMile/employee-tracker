@@ -114,4 +114,25 @@ function viewEmployeeByDepartment(department){
     });    
 }
 
+//list all employes
+function viewEmployees(){
+    let sqlQuery = `SELECT
+    e.first_name,
+    e.last_name,
+    r.title,
+    r.salary,
+    d.name as department
+    FROM
+    employees AS e,
+    roles AS r,
+    departments AS d
+    WHERE
+    r.department_id = d.id AND r.department_id = d.id AND e.role_id = r.id`;
+    configDB.query(sqlQuery, function(err,data){
+        if(err) console.log(err);
+        console.table(data);
+    });
+
+}
+
 init();
