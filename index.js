@@ -88,36 +88,26 @@ function init(){
             },
         ])
         .then((choice) =>{
-            switch(choice.departments){
-                case 'Engineering': viewEngineeringDepartment();
-                      break;
-                case 'Finance': viewFinanceDepartment();
-                      break;
-                case 'Legal': viewLegalDepartment();
-                       break;
-                case 'Sales': viewSalesDepartment();
-                       break;
-                default:
-                       break;
-            }
+            viewEmployeeByDepartment(choice.departments);
         })
     });
 }
 
-function viewEngineeringDepartment(){
+function viewEmployeeByDepartment(department){
     //select all from engineering dept
     let sqlQuery = `SELECT
     e.first_name,
     e.last_name,
     r.title,
     r.salary,
-    d.name
+    d.name as department
     FROM
     employees AS e,
     roles AS r,
     departments AS d
     WHERE
-    r.department_id = 2 AND r.department_id = d.id AND e.role_id = r.id`;
+    d.name = "`+ department+`" and
+    r.department_id = d.id AND r.department_id = d.id AND e.role_id = r.id`;
     configDB.query(sqlQuery, function(err,data){
         if(err) console.log(err);
         console.table(data);
