@@ -77,13 +77,7 @@ function init(){
         let sqlQuery = "Select * from departments";
         configDB.query(sqlQuery, function(err,data){
             if(err) console.log(err);
-           // let department_choices = [];
-            // iterate for all the rows in result
-            Object.keys(data).forEach(function(key) {
-                var row = data[key];
-                department_choices.push(row.name);
-            });
-            //display departments
+            department_choices = data;
         inquirer.prompt([
             {
                 type: 'list',
@@ -110,51 +104,23 @@ function init(){
     });
 }
 
-    // employees by manager
-    function viewEmployeesManager(){
-        //display list of managers
-        inquirer.prompt([
-            {
-                type: 'list',
-                name: 'managers',
-                message: 'which employee would you like to see direct report from?',
-                //list of managers
-                choices: [
-                    'Engineering',
-                    'Finance',
-                    'Legal',
-                    'Sales',
-                ],
-            },
-        ])
-        .then((choice) =>{
-            switch(choice.departments){
-                case 'Engineering': viewEngineeringDepartment();
-                      break;
-                case 'Finance': viewFinanceDepartment();
-                      break;
-                case 'Legal': viewLegalDepartment();
-                       break;
-                case 'Sales': viewSalesDepartment();
-                       break;
-                default:
-                       break;
-            }
-        })
-    }
-
 function viewEngineeringDepartment(){
-    let employeesByDepartment = [];
     //select all from engineering dept
-    let sqlQuery = "Select * from departments where name = 'Engineering'";
+    let sqlQuery = `SELECT
+    e.first_name,
+    e.last_name,
+    r.title,
+    r.salary,
+    d.name
+    FROM
+    employees AS e,
+    roles AS r,
+    departments AS d
+    WHERE
+    r.department_id = 2 AND r.department_id = d.id AND e.role_id = r.id`;
     configDB.query(sqlQuery, function(err,data){
         if(err) console.log(err);
-        // iterate for all the rows in result
-        Object.keys(data).forEach(function(key) {
-            var row = data[key];
-            employeesByDepartment.push(row.name);
-        });
-        console.table(employeesByDepartment);
+        console.table(data);
     });    
 }
 
