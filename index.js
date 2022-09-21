@@ -11,6 +11,8 @@ app.use(express.json());
 //logo
 const logo = require('asciiart-logo');
 const config = require('./package.json');
+const Role = require('./lib/Role');
+const Choice = require('inquirer/lib/objects/choice');
 console.log(logo(config).render());
 /** taken from https://www.npmjs.com/package/asciiart-logo */
 
@@ -27,6 +29,8 @@ const configDB = mysql.createConnection({
 
 let department_choices = [];
 let manager_choices = [];
+let roles_choices = [];
+let role_id;
 
 function init(){
     ///logo ET (Employee Tracker)
@@ -52,7 +56,6 @@ function init(){
             'Add Employee',
             'Remove employee',
             'Update employee',
-            'Update employee manager',
         ],
     },])
     .then((choice) =>{
@@ -60,6 +63,12 @@ function init(){
             case 'View all employees': viewEmployees();
                 break;
             case 'View all employees by department': viewEmployeesDepartment();
+                break;
+            case 'View all employees by manager': viewEmployeesManager();
+                break;
+            case 'Add Employee': viewAddEmployee();
+                break;
+            case 'View all employees by manager': viewEmployeesManager();
                 break;
             case 'View all employees by manager': viewEmployeesManager();
                 break;
@@ -183,6 +192,98 @@ function viewManagerDetails(manager){
         if(err) console.log(err);
         console.table(data);
     });
+}
+
+function getListRoles(first_name,last_name){
+      //get roles
+      let sqlQuery = `SELECT
+      r.id,
+      r.title as name
+      FROM
+      roles AS r`;
+      configDB.query(sqlQuery, function(err,data){
+          if(err) console.log(err);
+          //console.table(data);
+          Object.keys(data).forEach(function(key) {
+              var row = data[key];
+              roles_choices.push(row.id,row.name);
+          });
+          roles_choices = data;
+          console.log("aquii :"+JSON.stringify(roles_choices));
+        //select the role
+        inquirer.prompt([{
+            type: 'list',
+            name: 'roles',
+            message: 'Select your role',
+            //list of roles
+            choices: roles_choices
+        },])
+        .then((choice) =>{
+            //saveNuewEmployee(first_name, last_name, choice.roles);
+            //get id
+            let sqlQuery = `SELECT
+                r.id
+                FROM
+                roles AS r  where r.title ='`+choice.roles+`'`;
+            configDB.query(sqlQuery, function(err,data){
+                if(err) console.log(err);
+                Object.keys(data).forEach(function(key) {
+                    var row = data[key];
+                    role_id = row.id;
+                    //insert nre employee
+                    let sqlQueryInsert = `INSERT INTO employees (first_name, last_name, role_id) VALUES (?)`;
+                    let values = [
+                        first_name,
+                        last_name,
+                        role_id
+                    ];
+                    configDB.query(sqlQueryInsert, ([values]), function(err,data){
+                        if(err) console.log(err);
+                        //display all the employee to see the new one
+                        viewEmployees();
+                    });
+                });
+            });
+        })
+   });
+}
+
+function viewAddEmployee(){
+    // input the data of the new employee
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'first_name',
+            message: 'What is the employee name?',
+            //check that is not empty
+            validate: (answer) =>{
+                if(answer !== ''){
+                    return true;
+                }
+                return 'Please enter employee name';
+            },
+        },
+        {
+            type: 'input',
+            name: 'last_name',
+            message: 'What is the employee last name?',
+            //check that is not empty
+            validate: (answer) =>{
+                if(answer !== ''){
+                    return true;
+                }
+                return 'Please enter employee last name';
+            },
+        },
+    ])
+    .then((answers) => {
+        //cretaes the object manager
+        const role = new Role(
+            answers.first_name,
+            answers.last_name
+        );
+        getListRoles(answers.first_name, answers.last_name); //get list of roles
+    })
 }
 
 init();
