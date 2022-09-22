@@ -30,6 +30,7 @@ const configDB = mysql.createConnection({
 let department_choices = [];
 let manager_choices = [];
 let roles_choices = [];
+let employees_choices =[];
 let role_id;
 
 function init(){
@@ -68,7 +69,7 @@ function init(){
                 break;
             case 'Add Employee': viewAddEmployee();
                 break;
-            case 'View all employees by manager': viewEmployeesManager();
+            case 'Remove employee': removeEmployee();
                 break;
             case 'View all employees by manager': viewEmployeesManager();
                 break;
@@ -208,8 +209,7 @@ function getListRoles(first_name,last_name){
               var row = data[key];
               roles_choices.push(row.id,row.name);
           });
-          roles_choices = data;
-          console.log("aquii :"+JSON.stringify(roles_choices));
+        roles_choices = data;
         //select the role
         inquirer.prompt([{
             type: 'list',
@@ -285,5 +285,39 @@ function viewAddEmployee(){
         getListRoles(answers.first_name, answers.last_name); //get list of roles
     })
 }
-
+// remove employee
+function removeEmployee(){
+    //select all employees
+    let sqlQuery = `SELECT
+    e.id as value,
+    e.first_name AS name
+    FROM
+    employees AS e`;
+    configDB.query(sqlQuery, function(err,data){
+        if(err) console.log(err);
+        //console.table(data);
+        Object.keys(data).forEach(function(key) {
+            var row = data[key];
+            employees_choices.push(row.id,row.name);
+        });
+        employees_choices = data;
+        //select the role
+        inquirer.prompt([{
+            type: 'list',
+            name: 'employees',
+            message: 'Select employee to be deleted',
+            //list of roles
+            choices: employees_choices
+        },])
+        .then((choice) =>{
+            //delete(choice.employees);
+            let sqlQuery = `Delete from employees where id =`+choice.employees;
+            configDB.query(sqlQuery, function(err){
+                if(err) console.log(err);
+                //display all the employee to see the new one
+                viewEmployees();
+            });
+         });
+    });
+}
 init();
