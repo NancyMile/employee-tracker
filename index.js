@@ -80,7 +80,6 @@ function init(){
                 break;
         }
     })
-}
 
 // employees by department
 function viewEmployeesDepartment(){
@@ -149,6 +148,7 @@ function viewEmployees(){
 function viewEmployeesManager(){
     //connect to db and select all employees
     let sqlQuery = `SELECT
+    e.id as value,
     e.first_name as name
     FROM
     employees AS e,
@@ -177,7 +177,6 @@ function viewEmployeesManager(){
             viewManagerDetails(choice.managers);
         })
     });
-    init();
 }
 
 //manager details
@@ -193,11 +192,12 @@ function viewManagerDetails(manager){
     roles AS r,
     departments AS d
     WHERE
-    e.first_name = '`+ manager +`' AND
+    e.id = '`+ manager +`' AND
     r.department_id = d.id AND r.department_id = d.id AND e.role_id = r.id`;
     configDB.query(sqlQuery, function(err,data){
         if(err) console.log(err);
         console.table(data);
+        init();
     });
 }
 
@@ -241,14 +241,14 @@ function getListRoles(first_name,last_name){
                     });
             }else {
                     //update employee details
-                    let sqlQuery = `Update employees set ? where id = ?` ;
-                    let values = [
-                        first_name,
-                        last_name,
-                        editId
-                    ];
-                    configDB.query(sqlQuery, ([values,editId]), function(err){
-                        if(err) console.log(err);
+                    let sqlQuery = `Update employees set first_name ='`+first_name+`' , last_name = '`+last_name+`', role_id =`+choice.roles+` where id =`+editId ;
+                    // let values = [
+                    //     first_name = first_name,
+                    //     last_name  = first_name
+                    // ];
+                    //configDB.query(sqlQuery, ([values,editId]), function(err){
+                    configDB.query(sqlQuery, function(err){
+                    if(err) console.log(err);
                         //display all the employee to see the new one
                         //viewEmployees();
                     });
@@ -333,7 +333,6 @@ function removeEmployee(){
             });
          });
     });
-    init();
 }
 
 //select all employees
@@ -414,5 +413,6 @@ function editEmployee(){
             getListRoles(answers.first_name, answers.last_name); //get list of roles
         })
     });
+}
 }
 init();
