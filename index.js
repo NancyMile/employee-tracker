@@ -120,7 +120,8 @@ function viewEmployeeByDepartment(department){
     configDB.query(sqlQuery, function(err,data){
         if(err) console.log(err);
         console.table(data);
-    });    
+    });
+    init();
 }
 
 //list all employes
@@ -141,6 +142,7 @@ function viewEmployees(){
         if(err) console.log(err);
         console.table(data);
     });
+    init();
 }
 
 //view employees by manager
@@ -175,6 +177,7 @@ function viewEmployeesManager(){
             viewManagerDetails(choice.managers);
         })
     });
+    init();
 }
 
 //manager details
@@ -330,6 +333,7 @@ function removeEmployee(){
             });
          });
     });
+    init();
 }
 
 //select all employees
@@ -400,30 +404,15 @@ function editEmployee(){
         },
         ])
         .then((answers) => {
-        //cretaes the object manager
-        const employee = new Employee(
-            answers.first_name,
-            answers.last_name
-        );
-        editId = answers.employees;
-        action = 'edit';
-        getListRoles(answers.first_name, answers.last_name); //get list of roles
-    })
-        // .then((choice) =>{
-        //      //update employee details
-        //      let sqlQuery = `Update employees set ? where id = ?` ;
-        //      let values = [
-        //          first_name,
-        //          last_name,
-        //          choice.employees
-        //      ];
-        //      configDB.query(sqlQuery, ([values,editEmployee]), function(err){
-        //          if(err) console.log(err);
-        //          //display all the employee to see the new one
-        //          //viewEmployees();
-        //      });
-        //  });//choise
+            //cretaes the object manager
+            const employee = new Employee(
+                answers.first_name,
+                answers.last_name
+            );
+            editId = answers.employees;
+            action = 'edit';
+            getListRoles(answers.first_name, answers.last_name); //get list of roles
+        })
     });
 }
-
 init();
