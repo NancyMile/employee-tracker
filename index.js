@@ -12,6 +12,7 @@ app.use(express.json());
 const logo = require('asciiart-logo');
 const config = require('./package.json');
 const Role = require('./lib/Role');
+const Employee = require('./lib/Employee');
 const Choice = require('inquirer/lib/objects/choice');
 console.log(logo(config).render());
 /** taken from https://www.npmjs.com/package/asciiart-logo */
@@ -31,7 +32,9 @@ let department_choices = [];
 let manager_choices = [];
 let roles_choices = [];
 let employees_choices =[];
-let role_id;
+//let role_id;
+let editId = 0;
+let action = '';
 
 function init(){
     ///logo ET (Employee Tracker)
@@ -67,11 +70,11 @@ function init(){
                 break;
             case 'View all employees by manager': viewEmployeesManager();
                 break;
-            case 'Add Employee': viewAddEmployee();
+            case 'Add Employee':    addEmployee();
                 break;
             case 'Remove employee': removeEmployee();
                 break;
-            case 'View all employees by manager': viewEmployeesManager();
+            case 'Update employee': editEmployee();
                 break;
             default:
                 break;
@@ -198,7 +201,7 @@ function viewManagerDetails(manager){
 function getListRoles(first_name,last_name){
       //get roles
       let sqlQuery = `SELECT
-      r.id,
+      r.id as value,
       r.title as name
       FROM
       roles AS r`;
@@ -207,48 +210,56 @@ function getListRoles(first_name,last_name){
           //console.table(data);
           Object.keys(data).forEach(function(key) {
               var row = data[key];
-              roles_choices.push(row.id,row.name);
+              roles_choices.push(row.name);
           });
-        roles_choices = data;
-        //select the role
-        inquirer.prompt([{
-            type: 'list',
-            name: 'roles',
-            message: 'Select your role',
-            //list of roles
-            choices: roles_choices
-        },])
-        .then((choice) =>{
-            //saveNuewEmployee(first_name, last_name, choice.roles);
-            //get id
-            let sqlQuery = `SELECT
-                r.id
-                FROM
-                roles AS r  where r.title ='`+choice.roles+`'`;
-            configDB.query(sqlQuery, function(err,data){
-                if(err) console.log(err);
-                Object.keys(data).forEach(function(key) {
-                    var row = data[key];
-                    role_id = row.id;
+            roles_choices = data;
+            //select the role
+            inquirer.prompt([{
+                type: 'list',
+                name: 'roles',
+                message: 'Select your role',
+                //list of roles
+                choices: roles_choices
+            },])
+            .then((choice) =>{
+            // depend of the value of the action Iwill inser or  update the employee
+            if(action !='edit'){
                     //insert nre employee
                     let sqlQueryInsert = `INSERT INTO employees (first_name, last_name, role_id) VALUES (?)`;
                     let values = [
                         first_name,
                         last_name,
-                        role_id
+                        choice.roles
                     ];
                     configDB.query(sqlQueryInsert, ([values]), function(err,data){
                         if(err) console.log(err);
                         //display all the employee to see the new one
-                        viewEmployees();
+                        //viewEmployees();
                     });
-                });
-            });
-        })
-   });
+            }else {
+                    //update employee details
+                    let sqlQuery = `Update employees set ? where id = ?` ;
+                    let values = [
+                        first_name,
+                        last_name,
+                        editId
+                    ];
+                    configDB.query(sqlQuery, ([values,editId]), function(err){
+                        if(err) console.log(err);
+                        //display all the employee to see the new one
+                        //viewEmployees();
+                    });
+                    //unset the values
+                    editId = 0;
+                    action = ''; 
+           }
+            //display all the employee to see the new one
+            viewEmployees();
+        });
+    });
 }
 
-function viewAddEmployee(){
+function addEmployee(){
     // input the data of the new employee
     inquirer.prompt([
         {
@@ -311,8 +322,8 @@ function removeEmployee(){
         },])
         .then((choice) =>{
             //delete(choice.employees);
-            let sqlQuery = `Delete from employees where id =`+choice.employees;
-            configDB.query(sqlQuery, function(err){
+            let sqlQuery = `Delete from employees where id =?`;
+            configDB.query(sqlQuery, [choice.employees], function(err){
                 if(err) console.log(err);
                 //display all the employee to see the new one
                 viewEmployees();
@@ -320,4 +331,99 @@ function removeEmployee(){
          });
     });
 }
+
+//select all employees
+function listEmployees(){
+    //select all employees
+    let sqlQuery = `SELECT
+    e.id as value,
+    e.first_name as name
+    FROM
+    employees as e`;
+    configDB.query(sqlQuery, function(err,data){
+        if(err) console.log(err);
+        //console.table(data);
+        Object.keys(data).forEach(function(key) {
+            var row = data[key];
+            employees_choices.push(row.id,row.name);
+        });
+    });
+}
+
+//edit employee
+function editEmployee(){
+    //select all employees
+    let sqlQuery = `SELECT
+    e.id as value,
+    e.first_name AS name
+    FROM
+    employees AS e`;
+    configDB.query(sqlQuery, function(err,data){
+        if(err) console.log(err);
+        //console.table(data);
+        Object.keys(data).forEach(function(key) {
+            var row = data[key];
+            employees_choices.push(row.id,row.name);
+        });
+        employees_choices = data;
+        //select the role
+        inquirer.prompt([{
+            type: 'list',
+            name: 'employees',
+            message: 'Select employee to be edited',
+            //list of employees
+            choices: employees_choices
+        },
+        {
+            type: 'input',
+            name: 'first_name',
+            message: 'What is the employee name?',
+            //check that is not empty
+            validate: (answer) =>{
+                if(answer !== ''){
+                    return true;
+                }
+                return 'Please enter employee name';
+            },
+        },
+        {
+            type: 'input',
+            name: 'last_name',
+            message: 'What is the employee last name?',
+            //check that is not empty
+            validate: (answer) =>{
+                if(answer !== ''){
+                    return true;
+                }
+                return 'Please enter employee last name';
+            },
+        },
+        ])
+        .then((answers) => {
+        //cretaes the object manager
+        const employee = new Employee(
+            answers.first_name,
+            answers.last_name
+        );
+        editId = answers.employees;
+        action = 'edit';
+        getListRoles(answers.first_name, answers.last_name); //get list of roles
+    })
+        // .then((choice) =>{
+        //      //update employee details
+        //      let sqlQuery = `Update employees set ? where id = ?` ;
+        //      let values = [
+        //          first_name,
+        //          last_name,
+        //          choice.employees
+        //      ];
+        //      configDB.query(sqlQuery, ([values,editEmployee]), function(err){
+        //          if(err) console.log(err);
+        //          //display all the employee to see the new one
+        //          //viewEmployees();
+        //      });
+        //  });//choise
+    });
+}
+
 init();
